@@ -9,8 +9,8 @@ type Application struct {
 	ID int `json:"id"`
 }
 
-func (c *Client) GetApplications() (*[]Application, error) {
-	req, err := c.NewRequest("GET", fmt.Sprintf("%s/applications", c.baseUrl), nil)
+func (c *Client) GetApplications() ([]*Application, error) {
+	req, err := c.NewRequest("GET", fmt.Sprintf("%s/applications", c.baseURL), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -28,11 +28,11 @@ func (c *Client) GetApplications() (*[]Application, error) {
 	defer resp.Body.Close()
 	decoder := json.NewDecoder(resp.Body)
 
-	var a []Application
-	err2 := decoder.Decode(&a)
-	if err2 != nil {
-		fmt.Printf("%+v\n", err2)
+	var a []*Application
+	err = decoder.Decode(&a)
+	if err != nil {
+		return nil, err
 	}
 
-	return &a, nil
+	return a, nil
 }

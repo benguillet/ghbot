@@ -9,16 +9,16 @@ import (
 
 type Client struct {
 	client  *http.Client
-	baseUrl string
+	baseURL string
 	token   string
 }
 
-func New(baseUrl string, token string) *Client {
+func New(baseURL string, token string) *Client {
 	c := http.DefaultClient
 
 	return &Client{
 		client:  c,
-		baseUrl: baseUrl,
+		baseURL: baseURL,
 		token:   token,
 	}
 }
