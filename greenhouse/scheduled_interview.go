@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-type Interviewers struct {
+type Interviewer struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
@@ -20,12 +20,12 @@ type Start struct {
 }
 
 type ScheduledInterview struct {
-	ID           int             `json:"id"`
-	Start        *Start          `json:"start"`
-	Status       string          `json:"status"`
-	Location     string          `json:"location"`
-	Interview    *Interview      `json:"interview"`
-	Interviewers []*Interviewers `json:"interviewers"`
+	ID           int            `json:"id"`
+	Start        *Start         `json:"start"`
+	Status       string         `json:"status"`
+	Location     string         `json:"location"`
+	Interview    *Interview     `json:"interview"`
+	Interviewers []*Interviewer `json:"interviewers"`
 }
 
 func (c *Client) GetScheduledInterviews(appID int) ([]*ScheduledInterview, error) {

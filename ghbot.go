@@ -39,9 +39,11 @@ func (gh *GHBot) GetInterviews() {
 		log.Fatal(err)
 	}
 
-	// for _, app := range apps {
-	// 	fmt.Printf("%+v\n", app.ID)
-	// }
+	apps = filterApplication(apps)
+	if len(apps) == 0 {
+		log.Printf("No applications active\n")
+		return
+	}
 
 	notification := make(chan *notifier.Notification)
 	ticker := time.NewTicker(time.Second * 1)
@@ -63,31 +65,75 @@ func (gh *GHBot) GetInterviews() {
 }
 
 func getSchedules(gh *GHBot, apps []*greenhouse.Application, ticker *time.Ticker, done chan<- bool, notif chan<- *notifier.Notification) {
-	// i := 0
+	i := 0
 
 	for range ticker.C {
-		// app := apps[i]
+		app := apps[i]
 		// fmt.Printf("%d\n", app.ID)
+		candidate := &greenhouse.Candidate{}
+		interviews := make([]*notifier.Interview, 0)
 
-		scheds, err := gh.ghclient.GetScheduledInterviews(7825355)
+		scheds, err := gh.ghclient.GetScheduledInterviews(app.ID) //7825355
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		for _, sched := range scheds {
-			t, err := time.Parse(time.RFC3339Nano, sched.Start.DateTime)
+			startTime, err := time.Parse(time.RFC3339Nano, sched.Start.DateTime)
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Printf("time: %s", t)
-			notif <- &notifier.Notification{
-				Candidate: "Laura",
+
+			fmt.Printf("time: %s\n", startTime)
+			// today := time.Now().UTC().Truncate(24 * time.Hour)
+			// tomorrow := today.Add(24 * time.Hour)
+			// fmt.Printf("%s\n", today)
+
+			// TODO: convert every date to PST/PDT
+			// if startTime.After(today) && startTime.Before(tomorrow) {
+			candidate, err = gh.ghclient.GetCandidate(app.CandidateID) //6908986
+			if err != nil {
+				log.Fatal(err)
 			}
+
+			interview := notifier.Interview{
+				Name:        sched.Interview.Name,
+				Start:       startTime.String(), // TODO: PST and show hour, min only
+				Interviewer: sched.Interviewers[0].Name,
+			}
+			interviews = append(interviews, &interview)
+			// }
+
 		}
 
-		// i += 1
-		// if i == len(apps) {
-		done <- true
-		// }
+		notification := &notifier.Notification{
+			Candidate:  candidate.Name(),
+			Role:       app.Jobs[0].Name,
+			Interviews: interviews,
+		}
+		fmt.Printf("%+v\n", notification)
+
+		for _, inter := range interviews {
+			fmt.Printf("%+v\n", inter)
+		}
+		// notif <- notification
+
+		i += 1
+		if i == len(apps) {
+			done <- true
+		}
 	}
+}
+
+func filterApplication(apps []*greenhouse.Application) []*greenhouse.Application {
+	filteredApps := make([]*greenhouse.Application, 0)
+
+	for i, app := range apps {
+		fmt.Printf("app %d: status: %s, prospect: %t\n", i, app.Status, app.Prospect)
+		if app.Status == "active" && !app.Prospect {
+			filteredApps = append(filteredApps, app)
+		}
+	}
+
+	return filteredApps
 }
