@@ -1,8 +1,10 @@
 package ghbot
 
 import (
+	"fmt"
 	"log"
 
+	"github.com/benjamin-guillet/ghbot/greenhouse"
 	"github.com/benjamin-guillet/ghbot/notifier"
 	"github.com/robfig/cron"
 )
@@ -10,12 +12,14 @@ import (
 type GHBot struct {
 	cron     *cron.Cron
 	notifier notifier.Notifier
+	ghclient *greenhouse.Client
 }
 
-func New(cron *cron.Cron, notif notifier.Notifier) *GHBot {
+func New(cron *cron.Cron, notif notifier.Notifier, ghclient *greenhouse.Client) *GHBot {
 	gh := new(GHBot)
 	gh.cron = cron
 	gh.notifier = notif
+	gh.ghclient = ghclient
 	return gh
 }
 
@@ -31,9 +35,16 @@ func (gh *GHBot) Run(sched string, toRun func()) (bool, error) {
 func (gh *GHBot) GetInterviews() {
 	log.Printf("Getting the interviews...\n")
 
-	notif := &notifier.Notification{
-		Candidate: "Bob",
+	app, err := gh.ghclient.GetApplications()
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	gh.notifier.Notify(notif)
+	fmt.Printf("%+v\n", app)
+	// gh.ghclient.GetScheduledInterviews()
+
+	// notif := &notifier.Notification{
+	// 	Candidate: "Bob",
+	// }
+	// gh.notifier.Notify(notif)
 }
